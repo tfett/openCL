@@ -48,39 +48,37 @@ __global__ void MM_kernel(const float *mA, const float *mB, float *results, int 
 }
 
 void MM_dev(const float *mA, const float *mB, float *results, int Ah, int Aw, int Bw, double *gpuAllocTime, double *gpuCopyTime, double *gpuExecuteTime){
+    
     //Allocate memory
     double alloc_start = getTime(); // Performance timer
     float *mA_dev,*mB_dev,*results_dev;
-    
     assert(cudaMalloc((void**) &mA_dev,sizeof(float)*(Ah*Aw)) == cudaSuccess);
     assert(cudaMalloc((void**) &mB_dev,sizeof(float)*(Aw*Bw)) == cudaSuccess);
     assert(cudaMalloc((void**) &results_dev,sizeof(float)*(Ah*Bw)) == cudaSuccess);
-    
     double alloc_stop       = getTime(); // Performance timer
-    double copy_in_start    = getTime(); // Performance timer
     
+    double copy_in_start    = getTime(); // Performance timer
     //copy the input matrices to the device
     assert(cudaMemcpy(mA_dev,mA,sizeof(float)*(Ah*Aw),cudaMemcpyHostToDevice) == cudaSuccess);
     assert(cudaMemcpy(mB_dev,mB,sizeof(float)*(Aw*Bw),cudaMemcpyHostToDevice) == cudaSuccess);
-    
     double copy_in_stop = getTime(); // Performance timer
-    double kernel_start = getTime(); // Performance timer
     
+    double kernel_start = getTime(); // Performance timer
     //invoke the kernel
     dim3 dimBlock(BLOCK_SIZE,BLOCK_SIZE,1);
     dim3 dimGrid(ceil(Bw/(double)dimBlock.x),ceil(Ah/(double)dimBlock.y),1);
     MM_kernel<<<dimGrid,dimBlock>>>(mA_dev,mB_dev,results_dev,Ah,Aw,Bw);
-
     double kernel_stop      = getTime(); // Performance timer
-    double copy_out_start   = getTime(); // Performance timer
     
+    double copy_out_start   = getTime(); // Performance timer
     //retrieve results
     assert(cudaMemcpy(results,results_dev,sizeof(float)*(Ah*Bw),cudaMemcpyDeviceToHost) == cudaSuccess);
-
     double copy_out_stop = getTime(); // Performance timer
     
     *gpuAllocTime    = alloc_stop - alloc_start;
-    *gpuCopyTime     = copy_in_stop - copy_in_start + copy_out_stop - copy_out_start;
+   
+    *gpuCopyTime     = (copy_in_stop - copy_in_start) + (copy_out_stop - copy_out_start);
+    
     *gpuExecuteTime  = kernel_stop - kernel_start;
     
     //free device memory

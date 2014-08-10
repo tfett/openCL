@@ -5,9 +5,6 @@ gcc cpumm.c -o cpumm
 clear
 echo "Type    Run     Ah      Aw      Bh      Bw      Ch      Cw      gAlloc          gCopy           gExex           initM           cAlloc          tDevice         total   "
 
-
-
-
 for c in 32 64 128 256 512 1024 2048 4096 5680
 do
 for d in 1 2 3 4 5
